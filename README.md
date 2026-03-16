@@ -6,11 +6,20 @@ A minimal, offline-capable PWA for gongfu-style tea brewing. Select a tea, follo
 
 [What-Cha's *'Intro to Tea Collection'*](https://what-cha.com/products/intro-to-tea-collection)
 
-**Green** — Dragon Well Long Jing · Obubu Sencha of the Earth
+**Green**
+- Dragon Well Long Jing
+- Obubu Sencha of the Earth
 
-**Oolong** — Shan Lin Xi Red Oolong · Four Seasons Oolong · Amber GABA Oolong
+**Oolong**
+- Shan Lin Xi Red Oolong
+- Four Seasons Oolong
+- Amber GABA Oolong
 
-**Black** — Assam Mancotta SFTGFOP-1 · Ceylon Rosyth Bliss · Yunnan Golden Tippy · Mi Xiang Honey Black
+**Black**
+- Assam Mancotta SFTGFOP-1
+- Ceylon Rosyth Bliss
+- Yunnan Golden Tippy
+- Mi Xiang Honey Black
 
 ## Features
 
@@ -27,17 +36,6 @@ A minimal, offline-capable PWA for gongfu-style tea brewing. Select a tea, follo
 2. **Android:** Menu → *Add to Home Screen*
 3. **iOS:** Share → *Add to Home Screen*
 
-## Deploy
-
-Push the contents of this repo to GitHub Pages, Netlify, Cloudflare Pages, or any static host. No build step required — it's a single HTML file with a service worker.
-
-```
-index.html
-manifest.json
-sw.js
-icons/
-  icon-192.png
-  icon-512.png
 ```
 
 ## Updating the Tea List
@@ -55,7 +53,3 @@ All tea data lives in the `TEAS` array near the top of `index.html`. Each tea en
   notes: "Brewing tips..."
 }
 ```
-
-## License
-
-MIT
