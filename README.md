@@ -36,8 +36,6 @@ A minimal, offline-capable PWA for gongfu-style tea brewing. Select a tea, follo
 2. **Android:** Menu → *Add to Home Screen*
 3. **iOS:** Share → *Add to Home Screen*
 
-```
-
 ## Updating the Tea List
 
 All tea data lives in the `TEAS` array near the top of `index.html`. Each tea entry looks like:
