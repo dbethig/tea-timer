@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#1a1614" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gongfu" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <title>Gongfu Brewing Guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { min-height: 100vh; min-height: 100dvh; background: #1a1614; }
+    body { font-family: 'DM Sans', sans-serif; color: #e8e0d4; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <script>
+    "use strict";
+    const { useState, useEffect, useRef, useCallback, createElement: h } = React;
+
+    const TEAS = [
+      {
+        category: "Green Tea",
+        categoryNote: "The most delicate of teas, typified by its vegetal and grassy taste, one to pay careful attention to when preparing.",
+        color: "#5a7247", accent: "#8fb373",
+        teas: [
+          {
+            name: "Dragon Well 'Long Jing'",
+            origin: "China \u00b7 Zhejiang \u00b7 Wild-Growing",
+            grams: 5, temp: 80, rinse: false,
+            steeps: [15, 20, 25, 30, 40, 50, 65],
+            notes: "Use a gaiwan or glass. Pour water gently down the side \u2014 never directly onto the leaves. Watch for the flat, sword-shaped leaves to unfurl gracefully."
+          },
+          {
+            name: "Obubu 'Sencha of the Earth'",
+            origin: "Japan \u00b7 Obubu",
+            grams: 5, temp: 70, rinse: false,
+            steeps: [30, 15, 20, 40],
+            notes: "Japanese sencha is unusual for gongfu \u2014 use a lower temperature and a longer first steep to draw out the sweet umami. The second steep can be very quick."
+          }
+        ]
+      },
+      {
+        category: "Oolong Tea",
+        categoryNote: "The most diverse tea type which can vary tremendously with different degrees of oxidation and roast.",
+        color: "#8b6914", accent: "#c49b2a",
+        teas: [
+          {
+            name: "'Shan Lin Xi' Red Oolong",
+            origin: "Taiwan \u00b7 Shan Lin Xi",
+            grams: 6, temp: 95, rinse: true,
+            steeps: [20, 20, 25, 30, 35, 40, 50, 65],
+            notes: "A heavily oxidised and roasted Taiwanese oolong. Rinse briefly, then enjoy the complex layering of fruit and roast that develops across steeps."
+          },
+          {
+            name: "Four Seasons Oolong",
+            origin: "Taiwan",
+            grams: 6, temp: 90, rinse: true,
+            steeps: [15, 15, 20, 25, 30, 40, 50],
+            notes: "A lightly oxidised, rolled oolong. The leaves take a steep or two to fully open \u2014 the mid-steeps are often the most flavourful and floral."
+          },
+          {
+            name: "Amber GABA Oolong",
+            origin: "Taiwan",
+            grams: 6, temp: 90, rinse: true,
+            steeps: [20, 20, 25, 30, 35, 45, 55, 70],
+            notes: "GABA oolongs undergo anaerobic processing, producing a uniquely smooth, honeyed character. Very forgiving \u2014 hard to overbrew."
+          }
+        ]
+      },
+      {
+        category: "Black Tea",
+        categoryNote: "The most famous tea type, known for its fuller taste.",
+        color: "#6b3a2a", accent: "#a0593f",
+        teas: [
+          {
+            name: "Assam Mancotta SFTGFOP-1 Clonal",
+            origin: "India \u00b7 Assam \u00b7 Mancotta Estate",
+            grams: 5, temp: 95, rinse: false,
+            steeps: [15, 15, 20, 25, 35, 50],
+            notes: "A bold, malty Assam. Keep early steeps short \u2014 the full-leaf grade has plenty to give but can turn astringent if pushed too long."
+          },
+          {
+            name: "Rosyth 'Bliss' Hand-Rolled",
+            origin: "Ceylon \u00b7 Rosyth Estate",
+            grams: 5, temp: 95, rinse: false,
+            steeps: [15, 20, 25, 30, 40, 55],
+            notes: "Hand-rolled Ceylon with a refined, nuanced profile. The rolling means slower extraction \u2014 patience rewards with a sweet, layered cup."
+          },
+          {
+            name: "Yunnan Golden Tippy",
+            origin: "China \u00b7 Yunnan",
+            grams: 5, temp: 90, rinse: false,
+            steeps: [10, 10, 15, 15, 20, 25, 30, 40, 55, 70],
+            notes: "Dense golden buds that are exceptionally long-lasting. Start very quick \u2014 the early steeps should be honeyed and sweet with no bitterness at all."
+          },
+          {
+            name: "'Mi Xiang' Honey Black Tea",
+            origin: "Taiwan",
+            grams: 5, temp: 90, rinse: false,
+            steeps: [15, 15, 20, 25, 30, 40, 50, 65],
+            notes: "Leafhopper-bitten leaves produce a natural muscatel honey sweetness. Gentle steeping preserves the delicate aromatics that make this tea special."
+          }
+        ]
+      }
+    ];
+
+    const formatTime = (s) => {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return m > 0 ? m + ":" + String(sec).padStart(2, "0") : sec + "s";
+    };
+
+    function CircularTimer({ total, remaining, isRunning, color }) {
+      const r = 90;
+      const circ = 2 * Math.PI * r;
+      const progress = total > 0 ? (total - remaining) / total : 0;
+      const offset = circ * (1 - progress);
+
+      return h("svg", { viewBox: "0 0 200 200", style: { width: "100%", maxWidth: 220, display: "block", margin: "0 auto" } },
+        h("circle", { cx: 100, cy: 100, r: r, fill: "none", stroke: "rgba(255,255,255,0.08)", strokeWidth: 6 }),
+        h("circle", {
+          cx: 100, cy: 100, r: r, fill: "none",
+          stroke: color, strokeWidth: 6, strokeLinecap: "round",
+          strokeDasharray: circ, strokeDashoffset: offset,
+          transform: "rotate(-90 100 100)",
+          style: { transition: isRunning ? "stroke-dashoffset 1s linear" : "stroke-dashoffset 0.3s ease" }
+        }),
+        h("text", {
+          x: 100, y: 96, textAnchor: "middle", fill: "#e8e0d4",
+          fontSize: 42, fontFamily: "'Playfair Display', serif", fontWeight: 600
+        }, formatTime(remaining)),
+        h("text", {
+          x: 100, y: 122, textAnchor: "middle", fill: "rgba(232,224,212,0.45)",
+          fontSize: 11, fontFamily: "'DM Sans', sans-serif", letterSpacing: 2
+        }, isRunning ? "steeping" : remaining === 0 ? "done" : "ready")
+      );
+    }
+
+    function SteepIndicator({ steeps, currentSteep, color, rinse, onJumpTo }) {
+      const dots = [];
+      if (rinse) {
+        dots.push(h("div", {
+          key: "rinse", onClick: () => onJumpTo(-1),
+          style: {
+            width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 9, fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, fontWeight: 600, cursor: "pointer",
+            background: currentSteep === -1 ? color : "transparent",
+            border: "2px solid " + (currentSteep >= -1 ? color : "rgba(255,255,255,0.12)"),
+            color: currentSteep === -1 ? "#1a1614" : currentSteep > -1 ? color : "rgba(232,224,212,0.3)",
+            opacity: currentSteep > -1 ? 0.5 : 1, transition: "all 0.15s ease"
+          }
+        }, "R"));
+      }
+      steeps.forEach((_, i) => {
+        dots.push(h("div", {
+          key: i, onClick: () => onJumpTo(i),
+          style: {
+            width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer",
+            background: currentSteep === i ? color : "transparent",
+            border: "2px solid " + (currentSteep >= i ? color : "rgba(255,255,255,0.12)"),
+            color: currentSteep === i ? "#1a1614" : currentSteep > i ? color : "rgba(232,224,212,0.3)",
+            opacity: currentSteep > i ? 0.5 : 1, transition: "all 0.3s ease"
+          }
+        }, i + 1));
+      });
+      return h("div", { style: { display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", margin: "12px 0" } }, ...dots);
+    }
+
+    function GongfuGuide() {
+      const [selectedTea, setSelectedTea] = useState(null);
+      const [currentSteep, setCurrentSteep] = useState(0);
+      const [timeLeft, setTimeLeft] = useState(0);
+      const [isRunning, setIsRunning] = useState(false);
+      const [isDone, setIsDone] = useState(false);
+      const intervalRef = useRef(null);
+      const audioCtx = useRef(null);
+
+      const playChime = useCallback(() => {
+        try {
+          if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+          const ctx = audioCtx.current;
+          const now = ctx.currentTime;
+          [523.25, 659.25, 783.99].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, now + i * 0.25);
+            gain.gain.linearRampToValueAtTime(0.15, now + i * 0.25 + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.25 + 0.8);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now + i * 0.25);
+            osc.stop(now + i * 0.25 + 0.8);
+          });
+        } catch (e) {}
+      }, []);
+
+      useEffect(() => {
+        if (isRunning && timeLeft > 0) {
+          intervalRef.current = setInterval(() => {
+            setTimeLeft((t) => {
+              if (t <= 1) {
+                setIsRunning(false);
+                setIsDone(true);
+                playChime();
+                clearInterval(intervalRef.current);
+                return 0;
+              }
+              return t - 1;
+            });
+          }, 1000);
+        }
+        return () => clearInterval(intervalRef.current);
+      }, [isRunning, timeLeft, playChime]);
+
+      // Keep screen awake while timer is running
+      useEffect(() => {
+        let wakeLock = null;
+        if (isRunning && navigator.wakeLock) {
+          navigator.wakeLock.request("screen").then(wl => { wakeLock = wl; }).catch(() => {});
+        }
+        return () => { if (wakeLock) wakeLock.release(); };
+      }, [isRunning]);
+
+      const selectTea = (catIdx, teaIdx) => {
+        const tea = TEAS[catIdx].teas[teaIdx];
+        const color = TEAS[catIdx].accent;
+        setSelectedTea(Object.assign({}, tea, { catIdx, teaIdx, color, categoryColor: TEAS[catIdx].color }));
+        const startSteep = tea.rinse ? -1 : 0;
+        setCurrentSteep(startSteep);
+        setTimeLeft(tea.rinse ? 5 : tea.steeps[0]);
+        setIsRunning(false);
+        setIsDone(false);
+      };
+
+      const startTimer = () => { if (!isDone) setIsRunning(true); };
+      const pauseTimer = () => { setIsRunning(false); };
+
+      const nextSteep = () => {
+        if (!selectedTea) return;
+        const next = currentSteep + 1;
+        if (next >= selectedTea.steeps.length) { setSelectedTea(null); return; }
+        setCurrentSteep(next);
+        setTimeLeft(selectedTea.steeps[next]);
+        setIsRunning(false);
+        setIsDone(false);
+      };
+
+      const resetSteep = () => {
+        if (!selectedTea) return;
+        setTimeLeft(currentSteep === -1 ? 5 : selectedTea.steeps[currentSteep]);
+        setIsRunning(false);
+        setIsDone(false);
+      };
+
+      const jumpToSteep = (steepIndex) => {
+        if (!selectedTea) return;
+        clearInterval(intervalRef.current);
+        setCurrentSteep(steepIndex);
+        setTimeLeft(steepIndex === -1 ? 5 : selectedTea.steeps[steepIndex]);
+        setIsRunning(false);
+        setIsDone(false);
+      };
+
+      const getCurrentTotal = () => {
+        if (!selectedTea) return 0;
+        return currentSteep === -1 ? 5 : selectedTea.steeps[currentSteep];
+      };
+
+      // ── Brewing screen ──
+      if (selectedTea) {
+        const tea = selectedTea;
+        const isRinse = currentSteep === -1;
+        const isLastSteep = currentSteep === tea.steeps.length - 1;
+
+        return h("div", { style: { minHeight: "100vh", minHeight: "100dvh", background: "#1a1614", color: "#e8e0d4", fontFamily: "'DM Sans', sans-serif", padding: "0 0 40px 0" } },
+
+          // Back bar
+          h("div", { style: { padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, paddingTop: "max(16px, env(safe-area-inset-top))" } },
+            h("button", {
+              onClick: () => setSelectedTea(null),
+              style: { background: "none", border: "none", color: tea.color, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif", padding: "4px 0", display: "flex", alignItems: "center", gap: 6 }
+            }, h("span", { style: { fontSize: 18 } }, "\u2190"), " Back")
+          ),
+
+          h("div", { style: { padding: "28px 24px 0", maxWidth: 460, margin: "0 auto", animation: "fadeIn 0.3s ease" } },
+
+            // Tea name
+            h("div", { style: { textAlign: "center", marginBottom: 28 } },
+              h("h2", { style: { fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 } }, tea.name),
+              h("p", { style: { fontSize: 12, color: tea.color, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 } }, tea.origin)
+            ),
+
+            // Params grid
+            h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "rgba(255,255,255,0.04)", borderRadius: 12, overflow: "hidden", marginBottom: 28 } },
+              ...[
+                { label: "Leaf", value: tea.grams + "g / 100ml" },
+                { label: "Water", value: tea.temp + "\u00b0C" },
+                { label: "Steeps", value: String(tea.steeps.length) }
+              ].map((item) =>
+                h("div", { key: item.label, style: { background: "#211d1a", padding: "14px 8px", textAlign: "center" } },
+                  h("div", { style: { fontSize: 10, color: "rgba(232,224,212,0.4)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 } }, item.label),
+                  h("div", { style: { fontSize: 15, fontWeight: 500 } }, item.value)
+                )
+              )
+            ),
+
+            // Steep indicator (clickable)
+            h(SteepIndicator, { steeps: tea.steeps, currentSteep, color: tea.color, rinse: tea.rinse, onJumpTo: jumpToSteep }),
+
+            // Current steep label
+            h("div", { style: { textAlign: "center", margin: "6px 0 20px" } },
+              h("span", { style: { fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: tea.color, fontWeight: 600 } },
+                isRinse ? "Rinse \u2014 discard" : "Steep " + (currentSteep + 1) + " of " + tea.steeps.length)
+            ),
+
+            // Timer
+            h(CircularTimer, { total: getCurrentTotal(), remaining: timeLeft, isRunning, color: tea.color }),
+
+            // Controls
+            h("div", { style: { display: "flex", gap: 10, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" } },
+              !isDone && !isRunning && h("button", {
+                onClick: startTimer,
+                style: { padding: "14px 36px", borderRadius: 40, border: "none", background: tea.color, color: "#1a1614", fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer", letterSpacing: 0.5 }
+              }, timeLeft === getCurrentTotal() ? "Start" : "Resume"),
+
+              isRunning && h("button", {
+                onClick: pauseTimer,
+                style: { padding: "14px 36px", borderRadius: 40, border: "2px solid " + tea.color, background: "transparent", color: tea.color, fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer", letterSpacing: 0.5 }
+              }, "Pause"),
+
+              isDone && h("button", {
+                onClick: nextSteep,
+                style: { padding: "14px 36px", borderRadius: 40, border: "none", background: tea.color, color: "#1a1614", fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer", letterSpacing: 0.5, animation: "pulse 1.5s ease-in-out infinite" }
+              }, isLastSteep ? "Finish Session" : isRinse ? "Begin Steep 1 \u2192" : "Steep " + (currentSteep + 2) + " \u2192"),
+
+              !isRunning && !isDone && timeLeft !== getCurrentTotal() && h("button", {
+                onClick: resetSteep,
+                style: { padding: "14px 20px", borderRadius: 40, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(232,224,212,0.5)", fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer" }
+              }, "Reset")
+            ),
+
+            isDone && isRinse && h("p", {
+              style: { textAlign: "center", fontSize: 13, color: "rgba(232,224,212,0.5)", fontStyle: "italic", margin: "0 0 20px" }
+            }, "Pour away this rinse \u2014 it wakes the leaves up."),
+
+            // Steep times reference
+            h("div", { style: { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "16px 20px", marginTop: 8 } },
+              h("div", { style: { fontSize: 10, color: tea.color, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 } }, "Steep Times"),
+              h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } },
+                ...tea.steeps.map((s, i) =>
+                  h("span", {
+                    key: i,
+                    style: {
+                      fontSize: 13, padding: "3px 10px", borderRadius: 20,
+                      background: i === currentSteep ? tea.color + "22" : "transparent",
+                      color: i === currentSteep ? tea.color : "rgba(232,224,212,0.4)",
+                      border: i === currentSteep ? "1px solid " + tea.color + "44" : "1px solid transparent",
+                      fontWeight: i === currentSteep ? 600 : 400
+                    }
+                  }, formatTime(s))
+                )
+              )
+            ),
+
+            // Brewing notes
+            h("div", { style: { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "16px 20px", marginTop: 10 } },
+              h("div", { style: { fontSize: 10, color: tea.color, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 } }, "Brewing Notes"),
+              h("p", { style: { fontSize: 13, lineHeight: 1.7, color: "rgba(232,224,212,0.65)", margin: 0 } }, tea.notes)
+            )
+          )
+        );
+      }
+
+      // ── Tea selection screen ──
+      return h("div", { style: { minHeight: "100vh", minHeight: "100dvh", background: "#1a1614", color: "#e8e0d4", fontFamily: "'DM Sans', sans-serif" } },
+
+        // Header
+        h("div", { style: { padding: "48px 24px 36px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingTop: "max(48px, calc(env(safe-area-inset-top) + 24px))" } },
+          h("div", { style: { fontSize: 11, letterSpacing: 4, textTransform: "uppercase", color: "rgba(232,224,212,0.35)", marginBottom: 12 } }, "\u529f\u592b\u8336"),
+          h("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 600, margin: "0 0 8px", letterSpacing: 0.5 } }, "Gongfu Brewing Guide"),
+          h("p", { style: { fontSize: 13, color: "rgba(232,224,212,0.45)", margin: 0, maxWidth: 340, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 } },
+            "Select a tea to begin your session. All parameters are per 100ml of water.")
+        ),
+
+        // Tea list
+        h("div", { style: { padding: "0 20px 40px", maxWidth: 520, margin: "0 auto", paddingBottom: "max(40px, env(safe-area-inset-bottom))" } },
+          ...TEAS.map((cat, catIdx) =>
+            h("div", { key: catIdx, style: { marginTop: 32 } },
+              h("div", { style: { marginBottom: 16 } },
+                h("h2", { style: { fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 500, margin: "0 0 6px", color: cat.accent } }, cat.category),
+                h("p", { style: { fontSize: 12, color: "rgba(232,224,212,0.4)", margin: 0, lineHeight: 1.6 } }, cat.categoryNote)
+              ),
+              h("div", { style: { display: "flex", flexDirection: "column", gap: 8 } },
+                ...cat.teas.map((tea, teaIdx) =>
+                  h("button", {
+                    key: teaIdx,
+                    onClick: () => selectTea(catIdx, teaIdx),
+                    style: {
+                      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: 12, padding: "16px 20px", cursor: "pointer",
+                      textAlign: "left", transition: "all 0.2s ease", color: "#e8e0d4",
+                      display: "flex", justifyContent: "space-between", alignItems: "center"
+                    },
+                    onPointerEnter: (e) => { e.currentTarget.style.background = cat.color + "15"; e.currentTarget.style.borderColor = cat.color + "40"; },
+                    onPointerLeave: (e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }
+                  },
+                    h("div", null,
+                      h("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 500, marginBottom: 4 } }, tea.name),
+                      h("div", { style: { fontSize: 11, color: "rgba(232,224,212,0.4)", letterSpacing: 0.5 } }, tea.origin)
+                    ),
+                    h("div", { style: { textAlign: "right", flexShrink: 0, marginLeft: 16 } },
+                      h("div", { style: { fontSize: 12, color: "rgba(232,224,212,0.5)" } }, tea.grams + "g \u00b7 " + tea.temp + "\u00b0C"),
+                      h("div", { style: { fontSize: 11, color: "rgba(232,224,212,0.3)" } }, tea.steeps.length + " steeps")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    // ── Mount & register SW ──
+    ReactDOM.createRoot(document.getElementById("root")).render(h(GongfuGuide));
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
